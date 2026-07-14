@@ -1,45 +1,37 @@
-import { useDispatch, useSelector } from "react-redux";
-import { addToCart } from "./redux/cartSlice";
 import { useEffect } from "react";
+import { useDispatch } from "react-redux";
 import api from "./services/api";
-function App() {
-useEffect(() => {
-  const fetchProducts = async () => {
-    try {
-      const response = await api.get("/products");
-      console.log(response.data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+import { setProducts } from "./redux/productSlice";
+import Home from "./pages/Home";
 
-  fetchProducts();
-}, []);
+function App() {
+
   const dispatch = useDispatch();
 
-  const cart = useSelector((state: any) => state.cart);
+  useEffect(() => {
 
-  const handleClick = () => {
-    dispatch(
-      addToCart({
-        id: 1,
-        title: "iPhone 16",
-        price: 120000,
-      })
-    );
-  };
+    const fetchProducts = async () => {
 
-  console.log(cart);
+      try {
 
-  return (
-    <div>
-      <h1>Redux Dispatch Example</h1>
+        const response = await api.get("/products");
 
-      <button onClick={handleClick}>
-        Add Product
-      </button>
-    </div>
-  );
+        dispatch(setProducts(response.data.products));
+
+      } catch (error) {
+
+        console.log(error);
+
+      }
+
+    };
+
+    fetchProducts();
+
+  }, [dispatch]);
+
+  return <Home />;
+
 }
 
 export default App;
