@@ -1,12 +1,15 @@
 import { Card,  CardMedia,CardContent,Typography,Button,} from "@mui/material";
 import type { Product } from "../types/product";
-
+import { useDispatch } from "react-redux";
+import { addToCart } from "../redux/cartSlice";
 interface ProductCardProps {
   product: Product;
 }
 function ProductCard({product}:ProductCardProps) {
+  const dispatch = useDispatch();
+  
   return (
-    <Card sx={{width:280}}>
+    <Card sx={{width:280,height:"420",justifyContent:"space-between" ,display:"flex", flexDirection: "column",}} >
       <CardMedia
         component="img"
         height="200"
@@ -14,7 +17,7 @@ function ProductCard({product}:ProductCardProps) {
         alt="Product"
       />
 
-      <CardContent>
+      <CardContent >
 
         <Typography variant="h6">
           {product.title}
@@ -24,12 +27,13 @@ function ProductCard({product}:ProductCardProps) {
           ₹{product.price}
         </Typography>
 
-        <Button
-          variant="contained"
-          fullWidth
-        >
-          Add To Cart
-        </Button>
+       <Button
+  variant="contained"
+  fullWidth
+  onClick={() => dispatch(addToCart(product))}
+>
+  Add To Cart
+</Button>
 
       </CardContent>
     </Card>

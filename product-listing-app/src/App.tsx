@@ -1,8 +1,12 @@
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
+import { Routes, Route } from "react-router-dom";
+
 import api from "./services/api";
 import { setProducts } from "./redux/productSlice";
+
 import Home from "./pages/Home";
+import Cart from "./pages/Cart";
 
 function App() {
 
@@ -30,7 +34,17 @@ function App() {
 
   }, [dispatch]);
 
-  return <Home />;
+  return (
+
+    <Routes>
+
+      <Route path="/" element={<Home />} />
+
+      <Route path="/cart" element={<Cart />} />
+
+    </Routes>
+
+  );
 
 }
 
