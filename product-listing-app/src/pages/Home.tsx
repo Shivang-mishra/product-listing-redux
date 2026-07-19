@@ -59,9 +59,11 @@ function Home() {
         <Typography
           component="h1"
           variant="h4"
+          
           sx={{
             fontWeight: "bold",
             mb: 4,
+            
           }}
         >
           All Products

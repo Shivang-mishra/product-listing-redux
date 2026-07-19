@@ -7,7 +7,7 @@ import {
 import CustomSnackbar from "../components/CustomSnackbar";
 import Navbar from "../components/Navbar";
 import { useState } from "react";
-
+import { Link } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -91,9 +91,15 @@ function Cart() {
             <Box
               sx={{
                 display: "flex",
-                alignItems: "center",
+                flexDirection: {
+                  xs: "column",
+                  md: "row",
+                },
+                alignItems: {
+                  xs: "center",
+                  md: "center",
+                },
                 gap: 3,
-                py: 2,
               }}
             >
               <CardMedia
@@ -101,42 +107,75 @@ function Cart() {
                 image={item.thumbnail}
                 alt={item.title}
                 sx={{
-                  width: 120,
-                  height: 120,
+                  width: {
+                    xs: 90,
+                    md: 120,
+                  },
+                  height: {
+                    xs: 90,
+                    md: 120,
+                  },
                   objectFit: "contain",
                 }}
               />
 
-              <CardContent sx={{ flex: 1 }}>
+              <CardContent
+                sx={{
+                  flex: 1,
+                  width: "100%",
+                  textAlign: {
+                    xs: "center",
+                    md: "left",
+                  },
+                }}
+              >
                 <Typography
-                  variant="h6"
-                  sx={{ fontWeight: "bold" }}
+                  variant="h5"
+                  sx={{
+                    fontWeight: "bold",
+                    mb: 1,
+                  }}
                 >
                   {item.title}
                 </Typography>
 
-                <Typography>
+                <Typography
+                  sx={{
+                    color: "#666",
+                    mb: 0.5,
+                  }}
+                >
                   Price : ₹{item.price}
                 </Typography>
 
-                <Typography>
+                <Typography
+                  sx={{
+                    color: "#666",
+                    mb: 0.5,
+                  }}
+                >
                   Quantity : {item.quantity}
                 </Typography>
 
                 <Typography
                   sx={{
-                    mt: 1,
                     fontWeight: "bold",
+                    color: "#1976d2",
+                    fontSize: "20px",
+                    mt: 1,
                   }}
                 >
-                  Total : ₹
-                  {(item.price * item.quantity).toFixed(2)}
+                  Total : ₹{(item.price * item.quantity).toFixed(2)}
                 </Typography>
 
                 <Box
                   sx={{
                     display: "flex",
-                    alignItems: "center",
+                    flexWrap: "wrap",
+                    justifyContent: {
+                      xs: "center",
+                      md: "flex-start",
+                    },
                     gap: 2,
                     mt: 2,
                   }}
@@ -178,7 +217,16 @@ function Cart() {
                   <Button
                     color="error"
                     variant="contained"
-                    sx={{ ml: 2 }}
+                    sx={{
+                      width: {
+                        xs: "100%",
+                        sm: "170px"
+                      },
+                      mt: {
+                        xs: 1,
+                        md: 0
+                      }
+                    }}
                     onClick={() => {
                       dispatch(removeFromCart(item.id));
 
@@ -196,7 +244,12 @@ function Cart() {
             </Box>
 
             {index !== cartItems.length - 1 && (
-              <Divider sx={{ my: 2 }} />
+              <Divider
+                sx={{
+                  my: 3,
+                  borderColor: "#e5e7eb",
+                }}
+              />
             )}
           </Box>
         ))}
@@ -205,26 +258,65 @@ function Cart() {
 
         <Box
           sx={{
+            mt: 3,
+            p: 3,
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            background: "#1976d2",
+            color: "#fff",
+            borderRadius: "15px",
           }}
         >
           <Typography
             variant="h5"
-            sx={{ fontWeight: "bold" }}
+            sx={{
+              fontWeight: "bold",
+            }}
           >
             Grand Total
           </Typography>
 
           <Typography
-            variant="h5"
-            color="primary"
-            sx={{ fontWeight: "bold" }}
+            variant="h4"
+            sx={{
+              fontWeight: "bold",
+            }}
           >
             ₹ {totalPrice.toFixed(2)}
           </Typography>
-          
+
+        </Box>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            mt: 3,
+          }}
+        >
+          <Button
+            variant="outlined"
+            component={Link}
+            to="/"
+            sx={{
+              borderRadius: "10px",
+              textTransform: "none",
+              px: 3,
+            }}
+          >
+            Continue Shopping
+          </Button>
+
+          <Button
+            variant="contained"
+            sx={{
+              borderRadius: "10px",
+              textTransform: "none",
+              px: 4,
+            }}
+          >
+            Proceed to Checkout
+          </Button>
         </Box>
       </Card>
     </Box>
