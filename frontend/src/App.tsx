@@ -18,13 +18,13 @@ function App() {
 
       try {
 
-        const response = await api.get("/products");
+       const response = await api.get("/products");
 
-        dispatch(setProducts(response.data.products));
+       dispatch(setProducts(response.data.data));
 
       } catch (error) {
 
-        console.log(error);
+       
 
       }
 

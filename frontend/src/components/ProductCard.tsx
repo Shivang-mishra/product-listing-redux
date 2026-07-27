@@ -1,7 +1,7 @@
 import {
   Card,
-  CardMedia,
   CardContent,
+  CardMedia,
   Typography,
   Button,
   Box,
@@ -11,7 +11,7 @@ import {
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 
-import { useSelector, useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useState } from "react";
 
 import type { Product } from "../types/product";
@@ -46,11 +46,11 @@ function ProductCard({ product }: ProductCardProps) {
   );
 
   const cartItem = cartItems.find(
-    (item) => item.id === product.id
+    (item) => item._id === product._id
   );
 
   const wishlistItem = wishlistItems.find(
-    (item) => item.id === product.id
+    (item) => item._id === product._id
   );
 
   const [openSnackbar, setOpenSnackbar] = useState(false);
@@ -62,14 +62,13 @@ function ProductCard({ product }: ProductCardProps) {
 
   const handleAddToCart = () => {
     dispatch(addToCart(product));
-
     setSnackbarMessage("Product added to cart");
     setOpenSnackbar(true);
   };
 
   const handleWishlist = () => {
     if (wishlistItem) {
-      dispatch(removeFromWishlist(product.id));
+      dispatch(removeFromWishlist(product._id));
       setSnackbarMessage("Removed from wishlist");
     } else {
       dispatch(addToWishlist(product));
@@ -83,12 +82,14 @@ function ProductCard({ product }: ProductCardProps) {
     <>
       <Card
         sx={{
-          width: "100%",
-          height: "100%",
+          width: 260,
+          height: 335,
+          borderRadius: 3,
+          boxShadow: 3,
+          overflow: "hidden",
           display: "flex",
           flexDirection: "column",
           position: "relative",
-          borderRadius: 3,
           transition: "0.3s",
           "&:hover": {
             transform: "translateY(-5px)",
@@ -96,70 +97,111 @@ function ProductCard({ product }: ProductCardProps) {
           },
         }}
       >
-        
+        {/* Wishlist */}
+
         <Box
           sx={{
             position: "absolute",
             top: 8,
             right: 8,
-            zIndex: 2,
+            zIndex: 5,
+            bgcolor: "#fff",
+            borderRadius: "50%",
+            boxShadow: 1,
           }}
         >
-          <IconButton onClick={handleWishlist}>
+          <IconButton
+            size="small"
+            onClick={handleWishlist}
+          >
             {wishlistItem ? (
-              <FavoriteIcon color="error" />
+              <FavoriteIcon color="error"fontSize="small" />
             ) : (
-              <FavoriteBorderIcon />
+              <FavoriteBorderIcon fontSize="small" />
             )}
           </IconButton>
         </Box>
 
-        
-        <CardMedia
-          component="img"
-          image={product.thumbnail}
-          alt={product.title}
+        {/* Product Image */}
+
+        <Box
           sx={{
-    width:130,
-    height:130,
-    objectFit:"contain",
-    background:"#f8fafc",
-    borderRadius:"12px",
-    p:1
-}}
-        />
-
-        <CardContent>
-          <Typography
-            component="h2"
-            variant="h6"
+            height: 150,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            bgcolor: "#fafafa",
+            p: 1.5,
+          }}
+        >
+          <Box
+            component="img"
+            src={product.thumbnail}
+            alt={product.title}
             sx={{
-              minHeight: 64,
-              fontWeight: 500,
+              width: 130,
+              height: 130,
+              objectFit: "contain",
             }}
-          >
-            {product.title}
-          </Typography>
+          />
+        </Box>
+        {/* Product Details */}
 
-          <Typography
-            component="p"
-            variant="body1"
-            sx={{
-              mt: 1,
-              mb: 2,
-              fontWeight: "bold",
-            }}
-          >
-            ₹{product.price}
-          </Typography>
+        <CardContent
+          sx={{
+            flexGrow: 1,
+            p: 2,
+            pt: 1,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+          }}
+        >
+          <Box>
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 500,
+                fontSize: "1rem",
+                lineHeight: 1.4,
+                minHeight: 42,
+                mb: 1,
+                overflow: "hidden",
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+              }}
+            >
+              {product.title}
+            </Typography>
+
+            <Typography
+              variant="h6"
+              sx={{
+                mt: 1.5,
+                fontWeight: "bold",
+                color: "#000",
+              }}
+            >
+              ₹{product.price}
+            </Typography>
+          </Box>
 
           {!cartItem ? (
             <Button
               variant="contained"
               fullWidth
               onClick={handleAddToCart}
+              sx={{
+                mt: 2,
+                height: 42,
+                borderRadius: 2,
+                fontWeight: 600,
+                fontSize: "0.95rem",
+                textTransform: "uppercase",
+              }}
             >
-              Add To Cart
+              ADD TO CART
             </Button>
           ) : (
             <Box
@@ -167,32 +209,32 @@ function ProductCard({ product }: ProductCardProps) {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: 1,
-                mt: 1,
+                gap: 2,
+                mt: 2,
               }}
             >
               <Button
                 variant="outlined"
                 size="small"
                 sx={{
-                  minWidth: 40,
-                  width: 40,
-                  borderRadius:"10px",
-                  height: 40,
+                  minWidth: 42,
+                  width: 42,
+                  height: 42,
+                  borderRadius: 2,
                 }}
                 onClick={() =>
-                  dispatch(decreaseQuantity(product.id))
+                  dispatch(decreaseQuantity(product._id))
                 }
               >
                 -
               </Button>
 
               <Typography
-                component="span"
                 sx={{
-                  width: 30,
+                  minWidth: 24,
                   textAlign: "center",
                   fontWeight: "bold",
+                  fontSize: "18px",
                 }}
               >
                 {cartItem.quantity}
@@ -202,13 +244,13 @@ function ProductCard({ product }: ProductCardProps) {
                 variant="contained"
                 size="small"
                 sx={{
-                  minWidth: 40,
-                  width: 40,
-                  borderRadius:"10px",
-                  height: 40,
+                  minWidth: 42,
+                  width: 42,
+                  height: 42,
+                  borderRadius: 2,
                 }}
                 onClick={() =>
-                  dispatch(increaseQuantity(product.id))
+                  dispatch(increaseQuantity(product._id))
                 }
               >
                 +

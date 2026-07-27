@@ -148,10 +148,10 @@ function Home() {
             No products found.
           </Typography>
         ) : (
-          <Grid container spacing={3}>
+          <Grid container spacing={3} >
             {filteredProducts.map((product) => (
               <Grid
-                key={product.id}
+                key={product._id}
                 size={{
                   xs: 12,
                   sm: 6,

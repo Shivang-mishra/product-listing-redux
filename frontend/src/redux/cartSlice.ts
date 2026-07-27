@@ -1,5 +1,5 @@
-import { createSlice } from "@reduxjs/toolkit";
-import type { PayloadAction } from "@reduxjs/toolkit";
+import { createSlice,  } from "@reduxjs/toolkit";
+import type{ PayloadAction } from "@reduxjs/toolkit";
 import type { CartItem, CartState } from "../types/cart";
 
 const loadCartFromStorage = (): CartState => {
@@ -27,9 +27,12 @@ const cartSlice = createSlice({
   initialState,
 
   reducers: {
-    addToCart: (state, action: PayloadAction<Omit<CartItem, "quantity">>) => {
+    addToCart: (
+      state,
+      action: PayloadAction<Omit<CartItem, "quantity">>
+    ) => {
       const existingItem = state.cartItems.find(
-        (item) => item.id === action.payload.id
+        (item) => item._id === action.payload._id
       );
 
       if (existingItem) {
@@ -47,9 +50,9 @@ const cartSlice = createSlice({
       saveCartToStorage(state);
     },
 
-    increaseQuantity: (state, action: PayloadAction<number>) => {
+    increaseQuantity: (state, action: PayloadAction<string>) => {
       const item = state.cartItems.find(
-        (item) => item.id === action.payload
+        (item) => item._id === action.payload
       );
 
       if (item) {
@@ -61,9 +64,9 @@ const cartSlice = createSlice({
       }
     },
 
-    decreaseQuantity: (state, action: PayloadAction<number>) => {
+    decreaseQuantity: (state, action: PayloadAction<string>) => {
       const item = state.cartItems.find(
-        (item) => item.id === action.payload
+        (item) => item._id === action.payload
       );
 
       if (item) {
@@ -73,7 +76,7 @@ const cartSlice = createSlice({
           state.totalPrice -= item.price;
         } else {
           state.cartItems = state.cartItems.filter(
-            (cartItem) => cartItem.id !== action.payload
+            (cartItem) => cartItem._id !== action.payload
           );
 
           state.totalQuantity -= 1;
@@ -84,18 +87,17 @@ const cartSlice = createSlice({
       }
     },
 
-    removeFromCart: (state, action: PayloadAction<number>) => {
+    removeFromCart: (state, action: PayloadAction<string>) => {
       const item = state.cartItems.find(
-        (item) => item.id === action.payload
+        (item) => item._id === action.payload
       );
 
       if (item) {
         state.totalQuantity -= item.quantity;
-
         state.totalPrice -= item.price * item.quantity;
 
         state.cartItems = state.cartItems.filter(
-          (cartItem) => cartItem.id !== action.payload
+          (cartItem) => cartItem._id !== action.payload
         );
 
         saveCartToStorage(state);
