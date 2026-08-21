@@ -84,7 +84,7 @@ function Cart() {
               }}
             >
               {cartItems.map((item: any, index: number) => (
-                <Box key={item.id}>
+                <Box key={item._id}>
                   <Box
                     sx={{
                       display: "flex",
@@ -164,7 +164,7 @@ function Cart() {
                         >
                           <Button
                             onClick={() => {
-                              dispatch(decreaseQuantity(item.id));
+                              dispatch(decreaseQuantity(item._id));
                               setSnackbarMessage("Quantity decreased");
                               setOpenSnackbar(true);
                             }}
@@ -184,7 +184,7 @@ function Cart() {
 
                           <Button
                             onClick={() => {
-                              dispatch(increaseQuantity(item.id));
+                              dispatch(increaseQuantity(item._id));
                               setSnackbarMessage("Quantity increased");
                               setOpenSnackbar(true);
                             }}
@@ -199,7 +199,7 @@ function Cart() {
                           variant="outlined"
                           startIcon={<DeleteIcon />}
                           onClick={() => {
-                            dispatch(removeFromCart(item.id));
+                            dispatch(removeFromCart(item._id));
                             setSnackbarMessage("Item removed from cart");
                             setOpenSnackbar(true);
                           }}

@@ -12,9 +12,10 @@ const productSlice = createSlice({
     setProducts: (state, action) => {
         state.products = action.payload;
     },
-    setLoading: (state) => {
-    state.loading = true;
+    setLoading: (state, action) => {
+  state.loading = action.payload;
 },
+
  setError: (state, action) => {
       state.error = action.payload;
     },
