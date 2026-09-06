@@ -39,6 +39,8 @@ interface HomeProps {
   totalPages: number;
   category: string;
   setCategory: Dispatch<SetStateAction<string>>;
+  darkMode: boolean;
+  setDarkMode: Dispatch<SetStateAction<boolean>>;
 }
 
 function Home({
@@ -51,21 +53,23 @@ function Home({
   totalPages,
   category,
   setCategory,
+  darkMode,
+  setDarkMode,
 }: HomeProps) {
   const products = useSelector(
     (state: any) => state.product.products,
   ) as Product[];
 
+  const loading = useSelector((state: any) => state.product.loading);
+
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [openAddProduct, setOpenAddProduct] = useState(false);
 
   const handleCloseSnackbar = () => {
     setOpenSnackbar(false);
   };
-  const loading = useSelector((state: any) => state.product.loading);
-
-  const [searchTerm, setSearchTerm] = useState("");
-  const [openAddProduct, setOpenAddProduct] = useState(false);
 
   const categories = [
     "All",
@@ -89,7 +93,11 @@ function Home({
 
   return (
     <>
-      <Navbar onAddProductClick={() => setOpenAddProduct(true)} />
+      <Navbar
+        onAddProductClick={() => setOpenAddProduct(true)}
+        darkMode={darkMode}
+        setDarkMode={setDarkMode}
+      />
 
       <Toolbar />
 
@@ -249,7 +257,7 @@ function Home({
           }}
         />
       </Container>
-      
+
       <Dialog
         open={openAddProduct}
         onClose={() => setOpenAddProduct(false)}
@@ -290,6 +298,7 @@ function Home({
           />
         </DialogContent>
       </Dialog>
+
       <CustomSnackbar
         open={openSnackbar}
         message={snackbarMessage}

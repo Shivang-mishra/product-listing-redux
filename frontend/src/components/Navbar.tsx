@@ -8,23 +8,22 @@ import {
   Menu,
   MenuItem,
 } from "@mui/material";
-
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-
+import LightModeIcon from "@mui/icons-material/LightMode";
+import DarkModeIcon from "@mui/icons-material/DarkMode";
 import { useSelector } from "react-redux";
-import {
-  Link,
-  useLocation,
-} from "react-router-dom";
-
+import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
 
 interface NavbarProps {
   onAddProductClick?: () => void;
+  darkMode: boolean;
+  setDarkMode: React.Dispatch<React.SetStateAction<boolean>>;
 }
-function Navbar({ onAddProductClick }: NavbarProps) {
+
+function Navbar({ onAddProductClick, darkMode, setDarkMode }: NavbarProps) {
   const totalQuantity = useSelector(
     (state: any) => state.cart.totalQuantity
   );
@@ -39,8 +38,6 @@ function Navbar({ onAddProductClick }: NavbarProps) {
     useState<null | HTMLElement>(null);
 
   const isMenuOpen = Boolean(menuAnchor);
-
-  // Show Add Product menu only on Home page
   const isHomePage = location.pathname === "/";
 
   const handleMenuOpen = (
@@ -52,18 +49,22 @@ function Navbar({ onAddProductClick }: NavbarProps) {
   const handleMenuClose = () => {
     setMenuAnchor(null);
   };
-const handleAddProduct = () => {
-  handleMenuClose();
 
-  if (onAddProductClick) {
-    onAddProductClick();
-  }
-};
+  const handleAddProduct = () => {
+    handleMenuClose();
+
+    if (onAddProductClick) {
+      onAddProductClick();
+    }
+  };
+
+  const handleThemeToggle = () => {
+    setDarkMode((prev) => !prev);
+  };
 
   return (
     <AppBar position="fixed">
       <Toolbar>
-        {/* Logo / Store Name + Three Dot Menu */}
         <Box
           sx={{
             display: "flex",
@@ -113,7 +114,17 @@ const handleAddProduct = () => {
           )}
         </Box>
 
-        {/* Home */}
+        <IconButton
+          color="inherit"
+          onClick={handleThemeToggle}
+          sx={{
+            mr: 2,
+          }}
+          aria-label="Toggle theme"
+        >
+          {darkMode ? <LightModeIcon /> : <DarkModeIcon />}
+        </IconButton>
+
         <IconButton
           color="inherit"
           component={Link}
@@ -134,7 +145,6 @@ const handleAddProduct = () => {
           </Typography>
         </IconButton>
 
-        {/* Wishlist + Cart */}
         <Box
           sx={{
             display: "flex",

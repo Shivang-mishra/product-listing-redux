@@ -1,33 +1,26 @@
 import {
   Card,
   CardContent,
-  CardMedia,
   Typography,
   Button,
   Box,
   IconButton,
 } from "@mui/material";
-
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import FavoriteIcon from "@mui/icons-material/Favorite";
-
 import { useDispatch, useSelector } from "react-redux";
 import { useState } from "react";
-
 import type { Product } from "../types/product";
 import type { RootState } from "../redux/store";
-
 import {
   addToCart,
   increaseQuantity,
   decreaseQuantity,
 } from "../redux/cartSlice";
-
 import {
   addToWishlist,
   removeFromWishlist,
 } from "../redux/wishlistSlice";
-
 import CustomSnackbar from "./CustomSnackbar";
 
 interface ProductCardProps {
@@ -97,32 +90,25 @@ function ProductCard({ product }: ProductCardProps) {
           },
         }}
       >
-        {/* Wishlist */}
-
         <Box
           sx={{
             position: "absolute",
             top: 8,
             right: 8,
             zIndex: 5,
-            bgcolor: "#fff",
+            bgcolor: "background.paper",
             borderRadius: "50%",
             boxShadow: 1,
           }}
         >
-          <IconButton
-            size="small"
-            onClick={handleWishlist}
-          >
+          <IconButton size="small" onClick={handleWishlist}>
             {wishlistItem ? (
-              <FavoriteIcon color="error"fontSize="small" />
+              <FavoriteIcon color="error" fontSize="small" />
             ) : (
               <FavoriteBorderIcon fontSize="small" />
             )}
           </IconButton>
         </Box>
-
-        {/* Product Image */}
 
         <Box
           sx={{
@@ -130,7 +116,7 @@ function ProductCard({ product }: ProductCardProps) {
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            bgcolor: "#fafafa",
+            bgcolor: "background.default",
             p: 1.5,
           }}
         >
@@ -145,7 +131,6 @@ function ProductCard({ product }: ProductCardProps) {
             }}
           />
         </Box>
-        {/* Product Details */}
 
         <CardContent
           sx={{
@@ -180,7 +165,7 @@ function ProductCard({ product }: ProductCardProps) {
               sx={{
                 mt: 1.5,
                 fontWeight: "bold",
-                color: "#000",
+                color: "text.primary",
               }}
             >
               ₹{product.price}

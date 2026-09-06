@@ -1,20 +1,42 @@
 import { useSelector, useDispatch } from "react-redux";
-import { increaseQuantity, decreaseQuantity, removeFromCart, } from "../redux/cartSlice";
+import {  type Dispatch, type SetStateAction } from "react";
+import {
+  increaseQuantity,
+  decreaseQuantity,
+  removeFromCart,
+} from "../redux/cartSlice";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CustomSnackbar from "../components/CustomSnackbar";
 import Navbar from "../components/Navbar";
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  CardMedia,
+  Divider,
+  Grid,
+  Toolbar,
+  Typography,
+} from "@mui/material";
 
-import { Box, Button, Card, CardContent, CardMedia, Divider, Grid, Toolbar, Typography, } from "@mui/material";
+interface CartProps {
+  darkMode: boolean;
+  setDarkMode: Dispatch<SetStateAction<boolean>>;
+}
 
-function Cart() {
+function Cart({ darkMode, setDarkMode }: CartProps) {
   const dispatch = useDispatch();
 
-  const cartItems = useSelector((state: any) => state.cart.cartItems);
+  const cartItems = useSelector(
+    (state: any) => state.cart.cartItems
+  );
 
-  const totalPrice = useSelector((state: any) => state.cart.totalPrice);
+  const totalPrice = useSelector(
+    (state: any) => state.cart.totalPrice
+  );
 
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -26,7 +48,10 @@ function Cart() {
   if (cartItems.length === 0) {
     return (
       <>
-        <Navbar />
+       <Navbar
+  darkMode={darkMode}
+  setDarkMode={setDarkMode}
+/>
         <Toolbar />
 
         <Typography
@@ -45,7 +70,10 @@ function Cart() {
 
   return (
     <>
-      <Navbar />
+     <Navbar
+  darkMode={darkMode}
+  setDarkMode={setDarkMode}
+/>
       <Toolbar />
 
       <CustomSnackbar
@@ -57,7 +85,7 @@ function Cart() {
       <Box
         sx={{
           p: 4,
-          background: "#f5f7fb",
+          bgcolor: "background.default",
           minHeight: "100vh",
         }}
       >
@@ -66,16 +94,12 @@ function Cart() {
           sx={{
             fontWeight: "bold",
             mb: 4,
-
-            position: "sticky"
           }}
         >
           🛒 Shopping Cart
         </Typography>
 
         <Grid container spacing={3}>
-          
-
           <Grid size={{ xs: 12, md: 8 }}>
             <Card
               sx={{
@@ -103,7 +127,7 @@ function Cart() {
                       sx={{
                         width: 140,
                         height: 140,
-                        background: "#fafafa",
+                        bgcolor: "background.paper",
                         borderRadius: 2,
                         p: 1,
                         objectFit: "contain",
@@ -113,7 +137,6 @@ function Cart() {
                     <CardContent sx={{ flex: 1 }}>
                       <Typography
                         variant="h5"
-
                         gutterBottom
                         sx={{
                           fontWeight: "bold",
@@ -134,7 +157,7 @@ function Cart() {
                       <Typography
                         sx={{
                           mt: 1,
-                          color: "#1976d2",
+                          color: "primary.main",
                           fontWeight: "bold",
                           fontSize: 22,
                         }}
@@ -156,7 +179,8 @@ function Cart() {
                           sx={{
                             display: "flex",
                             alignItems: "center",
-                            border: "1px solid #d1d5db",
+                            border: "1px solid",
+                            borderColor: "divider",
                             borderRadius: "10px",
                             overflow: "hidden",
                             width: "fit-content",
@@ -200,7 +224,9 @@ function Cart() {
                           startIcon={<DeleteIcon />}
                           onClick={() => {
                             dispatch(removeFromCart(item._id));
-                            setSnackbarMessage("Item removed from cart");
+                            setSnackbarMessage(
+                              "Item removed from cart"
+                            );
                             setOpenSnackbar(true);
                           }}
                         >
@@ -217,7 +243,6 @@ function Cart() {
               ))}
             </Card>
           </Grid>
-          
 
           <Grid size={{ xs: 12, md: 4 }}>
             <Card
@@ -239,14 +264,16 @@ function Cart() {
               >
                 Order Summary
               </Typography>
+
               <Typography
                 sx={{
-                  color: "#666",
+                  color: "text.secondary",
                   mb: 3,
                 }}
               >
                 Items ({cartItems.length})
               </Typography>
+
               <Box
                 sx={{
                   display: "flex",
@@ -284,9 +311,7 @@ function Cart() {
               >
                 <Typography>Delivery Charge</Typography>
 
-                <Typography>
-                  ₹ 50.00
-                </Typography>
+                <Typography>₹ 50.00</Typography>
               </Box>
 
               <Box
@@ -298,9 +323,7 @@ function Cart() {
               >
                 <Typography>Discount</Typography>
 
-                <Typography
-                  color="success.main"
-                >
+                <Typography color="success.main">
                   - ₹ 100.00
                 </Typography>
               </Box>
@@ -367,6 +390,7 @@ function Cart() {
               >
                 Continue Shopping
               </Button>
+
               <Box sx={{ mt: 3 }}>
                 <Typography
                   variant="subtitle2"
@@ -380,8 +404,8 @@ function Cart() {
                 <Typography color="text.secondary">
                   2-3 Business Days
                 </Typography>
-                <Box sx={{ mt: 3 }}>
 
+                <Box sx={{ mt: 3 }}>
                   <Typography color="success.main">
                     ✔ Secure Checkout
                   </Typography>
@@ -393,7 +417,6 @@ function Cart() {
                   <Typography color="success.main">
                     ✔ 7 Days Return Policy
                   </Typography>
-
                 </Box>
               </Box>
             </Card>
@@ -403,4 +426,5 @@ function Cart() {
     </>
   );
 }
+
 export default Cart;

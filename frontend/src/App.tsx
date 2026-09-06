@@ -1,4 +1,9 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import { useDispatch } from "react-redux";
 import { Routes, Route } from "react-router-dom";
 import Wishlist from "./pages/Wishlist";
@@ -8,30 +13,34 @@ import Cart from "./pages/Cart";
 import api from "./services/api";
 import { setProducts, setLoading, setError } from "./redux/productSlice";
 
-function App() {
+interface AppProps {
+  darkMode: boolean;
+  setDarkMode: Dispatch<SetStateAction<boolean>>;
+}
+
+function App({ darkMode, setDarkMode }: AppProps) {
   const dispatch = useDispatch();
 
   const [sortBy, setSortBy] = useState("createdAt");
-  const [order, setOrder] = useState("desc");
+const [order, setOrder] = useState("desc");
+const [page, setPage] = useState(1);
+const [limit] = useState(8);
+const [totalPages, setTotalPages] = useState(1);
+const [category, setCategory] = useState("All");
 
-  const [page, setPage] = useState(1);
-  const [limit] = useState(8);
-  const [totalPages, setTotalPages] = useState(1);
-  const [category, setCategory] = useState("All");
   const fetchProducts = async () => {
     try {
       dispatch(setLoading(true));
       dispatch(setError(null));
 
       const response = await api.get(
-        `/products?page=${page}&limit=${limit}&sortBy=${sortBy}&order=${order}&category=${category}`,
+        `/products?page=${page}&limit=${limit}&sortBy=${sortBy}&order=${order}&category=${category}`
       );
 
       dispatch(setProducts(response.data.data));
       setTotalPages(response.data.totalPages);
     } catch (error) {
       console.error("Failed to fetch products:", error);
-
       dispatch(setError("Failed to load products"));
     } finally {
       dispatch(setLoading(false));
@@ -57,14 +66,31 @@ function App() {
             totalPages={totalPages}
             category={category}
             setCategory={setCategory}
+            darkMode={darkMode}
+            setDarkMode={setDarkMode}
           />
         }
       />
 
-      <Route path="/cart" element={<Cart />} />
+      <Route
+        path="/cart"
+        element={
+          <Cart
+            darkMode={darkMode}
+            setDarkMode={setDarkMode}
+          />
+        }
+      />
 
-      <Route path="/wishlist" element={<Wishlist />} />
-     
+      <Route
+        path="/wishlist"
+        element={
+          <Wishlist
+            darkMode={darkMode}
+            setDarkMode={setDarkMode}
+          />
+        }
+      />
     </Routes>
   );
 }
