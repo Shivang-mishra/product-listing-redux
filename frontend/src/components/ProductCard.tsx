@@ -5,13 +5,22 @@ import {
   Button,
   Box,
   IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import FavoriteIcon from "@mui/icons-material/Favorite";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
 import { useDispatch, useSelector } from "react-redux";
 import { useState } from "react";
+import api from "../services/api";
+import { showSnackbar } from "../redux/uiSlice";
 import type { Product } from "../types/product";
 import type { RootState } from "../redux/store";
+import EditProduct from "../pages/EditProduct";
 import {
   addToCart,
   increaseQuantity,
@@ -21,13 +30,13 @@ import {
   addToWishlist,
   removeFromWishlist,
 } from "../redux/wishlistSlice";
-import CustomSnackbar from "./CustomSnackbar";
 
 interface ProductCardProps {
   product: Product;
+  fetchProducts?: () => void;
 }
 
-function ProductCard({ product }: ProductCardProps) {
+function ProductCard({ product, fetchProducts }: ProductCardProps) {
   const dispatch = useDispatch();
 
   const cartItems = useSelector(
@@ -46,29 +55,69 @@ function ProductCard({ product }: ProductCardProps) {
     (item) => item._id === product._id
   );
 
-  const [openSnackbar, setOpenSnackbar] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [openDetails, setOpenDetails] = useState(false);
+  const [openEdit, setOpenEdit] = useState(false);
+  const [openRatingDialog, setOpenRatingDialog] = useState(false);
+  const [isRating, setIsRating] = useState(false);
 
-  const handleCloseSnackbar = () => {
-    setOpenSnackbar(false);
-  };
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const { isAdmin } = useSelector((state: any) => state.auth);
 
   const handleAddToCart = () => {
     dispatch(addToCart(product));
-    setSnackbarMessage("Product added to cart");
-    setOpenSnackbar(true);
+    dispatch(showSnackbar({ message: "Added to cart", severity: "success" }));
   };
 
   const handleWishlist = () => {
     if (wishlistItem) {
       dispatch(removeFromWishlist(product._id));
-      setSnackbarMessage("Removed from wishlist");
+      dispatch(showSnackbar({ message: "Removed from wishlist", severity: "info" }));
     } else {
       dispatch(addToWishlist(product));
-      setSnackbarMessage("Added to wishlist");
+      dispatch(showSnackbar({ message: "Added to wishlist", severity: "success" }));
     }
+  };
 
-    setOpenSnackbar(true);
+  const handleRatingSubmit = async (value: number) => {
+    const hasRated = localStorage.getItem(`rated_${product._id}`);
+    if (hasRated) {
+      dispatch(showSnackbar({ message: "You have already rated this product", severity: "warning" }));
+      setOpenRatingDialog(false);
+      return;
+    }
+    
+    try {
+      setIsRating(true);
+      const res = await api.post(`/products/${product._id}/rating`, { rating: value });
+      if (res.data.success) {
+         localStorage.setItem(`rated_${product._id}`, "true");
+         if (fetchProducts) fetchProducts();
+         dispatch(showSnackbar({ message: "Rating submitted successfully", severity: "success" }));
+      }
+    } catch(e) {
+       dispatch(showSnackbar({ message: "Failed to submit rating", severity: "error" }));
+    } finally {
+       setIsRating(false);
+       setOpenRatingDialog(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true);
+      const res = await api.delete(`/products/${product._id}`);
+      if (res.data.success) {
+        setOpenDeleteDialog(false);
+        dispatch(showSnackbar({ message: "Product deleted successfully", severity: "success" }));
+        if (fetchProducts) fetchProducts();
+      }
+    } catch (e) {
+      dispatch(showSnackbar({ message: "Unable to delete product", severity: "error" }));
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -76,7 +125,7 @@ function ProductCard({ product }: ProductCardProps) {
       <Card
         sx={{
           width: 260,
-          height: 335,
+          height: "100%",
           borderRadius: 3,
           boxShadow: 3,
           overflow: "hidden",
@@ -96,18 +145,51 @@ function ProductCard({ product }: ProductCardProps) {
             top: 8,
             right: 8,
             zIndex: 5,
-            bgcolor: "background.paper",
-            borderRadius: "50%",
-            boxShadow: 1,
+            display: "flex",
+            gap: 1,
           }}
         >
-          <IconButton size="small" onClick={handleWishlist}>
-            {wishlistItem ? (
-              <FavoriteIcon color="error" fontSize="small" />
-            ) : (
-              <FavoriteBorderIcon fontSize="small" />
-            )}
-          </IconButton>
+          {isAdmin && (
+            <>
+            <Box
+              sx={{
+                bgcolor: "background.paper",
+                borderRadius: "50%",
+                boxShadow: 1,
+              }}
+            >
+              <IconButton size="small" onClick={() => setOpenEdit(true)} title="Edit Product">
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </Box>
+            <Box
+              sx={{
+                bgcolor: "background.paper",
+                borderRadius: "50%",
+                boxShadow: 1,
+              }}
+            >
+              <IconButton size="small" onClick={() => setOpenDeleteDialog(true)} title="Delete Product">
+                <DeleteIcon fontSize="small" color="error" />
+              </IconButton>
+            </Box>
+            </>
+          )}
+          <Box
+            sx={{
+              bgcolor: "background.paper",
+              borderRadius: "50%",
+              boxShadow: 1,
+            }}
+          >
+            <IconButton size="small" onClick={handleWishlist} title="Add to Wishlist">
+              {wishlistItem ? (
+                <FavoriteIcon color="error" fontSize="small" />
+              ) : (
+                <FavoriteBorderIcon fontSize="small" />
+              )}
+            </IconButton>
+          </Box>
         </Box>
 
         <Box
@@ -124,10 +206,12 @@ function ProductCard({ product }: ProductCardProps) {
             component="img"
             src={product.thumbnail}
             alt={product.title}
+            onClick={() => setOpenDetails(true)}
             sx={{
               width: 130,
               height: 130,
               objectFit: "contain",
+              cursor: "pointer",
             }}
           />
         </Box>
@@ -161,9 +245,33 @@ function ProductCard({ product }: ProductCardProps) {
             </Typography>
 
             <Typography
+              variant="body2"
+              color="text.primary"
+              sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.5, cursor: "pointer", fontWeight: "bold" }}
+              onClick={() => setOpenRatingDialog(true)}
+            >
+              ⭐ {product.rating} ({product.ratingCount || 0})
+            </Typography>
+
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{
+                mb: 1,
+                overflow: "hidden",
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                cursor: "pointer",
+              }}
+              onClick={() => setOpenDetails(true)}
+            >
+              {product.description}
+            </Typography>
+
+            <Typography
               variant="h6"
               sx={{
-                mt: 1.5,
                 fontWeight: "bold",
                 color: "text.primary",
               }}
@@ -245,11 +353,108 @@ function ProductCard({ product }: ProductCardProps) {
         </CardContent>
       </Card>
 
-      <CustomSnackbar
-        open={openSnackbar}
-        message={snackbarMessage}
-        handleClose={handleCloseSnackbar}
-      />
+      <Dialog
+        open={openDetails}
+        onClose={() => setOpenDetails(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: "bold" }}>{product.title}</DialogTitle>
+        <DialogContent dividers>
+          <Box
+            component="img"
+            src={product.thumbnail}
+            alt={product.title}
+            sx={{
+              width: "100%",
+              maxHeight: 250,
+              objectFit: "contain",
+              mb: 2,
+            }}
+          />
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            {product.description}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            <strong>Brand:</strong> {product.brand}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            <strong>Category:</strong> {product.category}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            <strong>Rating:</strong> ⭐ {product.rating} ({product.ratingCount || 0})
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            <strong>Stock:</strong> {product.stock}
+          </Typography>
+          <Typography variant="h6" color="primary" sx={{ mt: 2, fontWeight: "bold" }}>
+            ₹{product.price}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDetails(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={openEdit}
+        onClose={() => setOpenEdit(false)}
+        fullWidth
+        maxWidth="sm"
+        sx={{
+          "& .MuiDialog-paper": {
+            width: "100%",
+            maxWidth: 640,
+            maxHeight: "90vh",
+            m: 2,
+          },
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: "bold" }}>Edit Product</DialogTitle>
+        <DialogContent
+          sx={{
+            overflowX: "hidden",
+            px: { xs: 2, sm: 3 },
+            pb: 2,
+          }}
+        >
+          <EditProduct
+            product={product}
+            onProductUpdated={async () => {
+              setOpenEdit(false);
+              if (fetchProducts) fetchProducts();
+            }}
+            onCancel={() => setOpenEdit(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={openRatingDialog} onClose={() => setOpenRatingDialog(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: "bold" }}>Rate this product</DialogTitle>
+        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+           <Button variant="outlined" onClick={() => handleRatingSubmit(1)} disabled={isRating}>{isRating ? "Submitting..." : "1 ⭐ Bad"}</Button>
+           <Button variant="outlined" onClick={() => handleRatingSubmit(2)} disabled={isRating}>{isRating ? "Submitting..." : "2 ⭐ Bad"}</Button>
+           <Button variant="outlined" onClick={() => handleRatingSubmit(3)} disabled={isRating}>{isRating ? "Submitting..." : "3 ⭐ Medium"}</Button>
+           <Button variant="outlined" onClick={() => handleRatingSubmit(4)} disabled={isRating}>{isRating ? "Submitting..." : "4 ⭐ Good"}</Button>
+           <Button variant="outlined" onClick={() => handleRatingSubmit(5)} disabled={isRating}>{isRating ? "Submitting..." : "5 ⭐ Best"}</Button>
+        </DialogContent>
+        <DialogActions>
+           <Button onClick={() => setOpenRatingDialog(false)} disabled={isRating}>Cancel</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={openDeleteDialog} onClose={() => setOpenDeleteDialog(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: "bold", color: "error.main" }}>Delete Product</DialogTitle>
+        <DialogContent>
+          <Typography>Are you sure you want to delete this product? This action cannot be undone.</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDeleteDialog(false)} disabled={isDeleting}>Cancel</Button>
+          <Button onClick={handleDelete} color="error" variant="contained" disabled={isDeleting}>
+            {isDeleting ? "Deleting..." : "Delete"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }

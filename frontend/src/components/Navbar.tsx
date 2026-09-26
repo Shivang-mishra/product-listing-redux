@@ -13,9 +13,11 @@ import FavoriteIcon from "@mui/icons-material/Favorite";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
-import { useSelector } from "react-redux";
-import { Link, useLocation } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { logout } from "../redux/authSlice";
+import { showSnackbar } from "../redux/uiSlice";
 
 interface NavbarProps {
   onAddProductClick?: () => void;
@@ -33,6 +35,10 @@ function Navbar({ onAddProductClick, darkMode, setDarkMode }: NavbarProps) {
   );
 
   const location = useLocation();
+
+  const { isAdmin, isAuthenticated } = useSelector((state: any) => state.auth);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const [menuAnchor, setMenuAnchor] =
     useState<null | HTMLElement>(null);
@@ -56,6 +62,13 @@ function Navbar({ onAddProductClick, darkMode, setDarkMode }: NavbarProps) {
     if (onAddProductClick) {
       onAddProductClick();
     }
+  };
+
+  const handleLogout = () => {
+    handleMenuClose();
+    dispatch(logout());
+    dispatch(showSnackbar({ message: "Logged out successfully", severity: "info" }));
+    navigate("/login");
   };
 
   const handleThemeToggle = () => {
@@ -82,7 +95,7 @@ function Navbar({ onAddProductClick, darkMode, setDarkMode }: NavbarProps) {
             Product Store
           </Typography>
 
-          {isHomePage && (
+          {isHomePage && (isAdmin || isAuthenticated) && (
             <>
               <IconButton
                 color="inherit"
@@ -106,11 +119,29 @@ function Navbar({ onAddProductClick, darkMode, setDarkMode }: NavbarProps) {
                   horizontal: "left",
                 }}
               >
-                <MenuItem onClick={handleAddProduct}>
-                  Add Product
+                {isAdmin && (
+                  <MenuItem onClick={handleAddProduct}>
+                    Add Product
+                  </MenuItem>
+                )}
+                <MenuItem onClick={handleLogout}>
+                  Logout
                 </MenuItem>
               </Menu>
             </>
+          )}
+
+          {!isAuthenticated && (
+            <IconButton
+              color="inherit"
+              component={Link}
+              to="/login"
+              sx={{ ml: 2, fontWeight: "bold" }}
+            >
+              <Typography sx={{ color: "inherit", fontSize: "16px", fontWeight: "bold" }}>
+                Login
+              </Typography>
+            </IconButton>
           )}
         </Box>
 

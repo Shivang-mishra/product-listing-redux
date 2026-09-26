@@ -1,13 +1,14 @@
 import { Request, Response } from "express";
 import Product from "../models/Product";
-import cloudinary from "../config/cloudinary";
+import { uploadImage, deleteImage } from "../services/cloudinaryService";
+
 export const getProducts = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   try {
     // Sorting
-    const { sortBy = "createdAt", order = "desc",category, } = req.query;
+    const { sortBy = "createdAt", order = "desc", category, search } = req.query;
 
     // Pagination
     const page = Number(req.query.page) || 1;
@@ -51,29 +52,38 @@ export const getProducts = async (
       return;
     }
 
-   const sortOrder = order === "asc" ? 1 : -1;
+    const sortOrder = order === "asc" ? 1 : -1;
 
-// Calculate how many products to skip
-const skip = (page - 1) * limit;
+    // Calculate how many products to skip
+    const skip = (page - 1) * limit;
 
-// Category filter
-const filter =
-  typeof category === "string" && category !== "All"
-    ? { category }
-    : {};
+    // Filter construction
+    const filter: any = {};
+    if (typeof category === "string" && category !== "All") {
+      filter.category = category;
+    }
 
-// Get total products
-const totalProducts = await Product.countDocuments(filter);
+    if (typeof search === "string" && search.trim() !== "") {
+      filter.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { brand: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+        { category: { $regex: search, $options: "i" } },
+      ];
+    }
 
-// Get paginated + sorted products
-const products = await Product.find(filter)
-  .sort({
-    [sortBy]: sortOrder,
-  })
-  .skip(skip)
-  .limit(limit);
+    // Get total products
+    const totalProducts = await Product.countDocuments(filter);
 
-const totalPages = Math.ceil(totalProducts / limit);
+    // Get paginated + sorted products
+    const products = await Product.find(filter)
+      .sort({
+        [sortBy]: sortOrder,
+      })
+      .skip(skip)
+      .limit(limit);
+
+    const totalPages = Math.ceil(totalProducts / limit);
 
     res.status(200).json({
       success: true,
@@ -102,31 +112,18 @@ export const createProduct = async (
 ): Promise<void> => {
   try {
     let thumbnail = req.body.thumbnail;
+    let cloudinaryPublicId = "";
 
     if (req.file) {
-      const result = await new Promise<any>((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-          {
-            folder: "products",
-          },
-          (error, result) => {
-            if (error) {
-              reject(error);
-            } else {
-              resolve(result);
-            }
-          }
-        );
-
-        stream.end(req.file!.buffer);
-      });
-
+      const result = await uploadImage(req.file.buffer);
       thumbnail = result.secure_url;
+      cloudinaryPublicId = result.public_id;
     }
 
     const product = await Product.create({
       ...req.body,
       thumbnail,
+      cloudinaryPublicId,
     });
 
     res.status(201).json({
@@ -148,21 +145,44 @@ export const updateProduct = async (
   res: Response
 ): Promise<void> => {
   try {
+    const productId = req.params.id;
+    const existingProduct = await Product.findById(productId);
+
+    if (!existingProduct) {
+      res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+      return;
+    }
+
+    let thumbnail = req.body.thumbnail || existingProduct.thumbnail;
+    let cloudinaryPublicId = existingProduct.cloudinaryPublicId;
+    let newImageUploaded = false;
+    let oldPublicId = existingProduct.cloudinaryPublicId;
+
+    if (req.file) {
+      const result = await uploadImage(req.file.buffer);
+      thumbnail = result.secure_url;
+      cloudinaryPublicId = result.public_id;
+      newImageUploaded = true;
+    }
+
     const updatedProduct = await Product.findByIdAndUpdate(
-      req.params.id,
-      req.body,
+      productId,
+      {
+        ...req.body,
+        thumbnail,
+        cloudinaryPublicId,
+      },
       {
         new: true,
         runValidators: true,
       }
     );
 
-    if (!updatedProduct) {
-      res.status(404).json({
-        success: false,
-        message: "Product not found",
-      });
-      return;
+    if (newImageUploaded && oldPublicId) {
+      await deleteImage(oldPublicId);
     }
 
     res.status(200).json({
@@ -184,22 +204,26 @@ export const deleteProduct = async (
   res: Response
 ): Promise<void> => {
   try {
-    const deletedProduct = await Product.findByIdAndDelete(
-      req.params.id
-    );
+    const product = await Product.findById(req.params.id);
 
-    if (!deletedProduct) {
+    if (!product) {
       res.status(404).json({
         success: false,
         message: "Product not found",
       });
       return;
     }
+    
+    if (product.cloudinaryPublicId) {
+      await deleteImage(product.cloudinaryPublicId);
+    }
+
+    await Product.findByIdAndDelete(req.params.id);
 
     res.status(200).json({
       success: true,
       message: "Product deleted successfully",
-      data: deletedProduct,
+      data: product,
     });
   } catch (error) {
     console.error(error);
@@ -239,3 +263,77 @@ export const getProductById = async (
     });
   }
 };
+
+export const getCategories = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const categories = await Product.distinct("category");
+    res.status(200).json({
+      success: true,
+      data: categories,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+export const rateProduct = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { rating } = req.body;
+    const productId = req.params.id;
+
+    if (typeof rating !== "number" || rating < 1 || rating > 5) {
+      res.status(400).json({
+        success: false,
+        message: "Rating must be a number between 1 and 5",
+      });
+      return;
+    }
+
+    const product = await Product.findById(productId);
+
+    if (!product) {
+      res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+      return;
+    }
+
+    let currentRating = product.rating || 0;
+    let currentCount = product.ratingCount || 0;
+
+    if (currentCount === 0 && currentRating > 0) {
+      currentCount = 1; // Legacy migration: treat existing rating as 1 initial vote
+    }
+
+    const newCount = currentCount + 1;
+    const newRating = ((currentRating * currentCount) + rating) / newCount;
+
+    product.rating = Number(newRating.toFixed(1));
+    product.ratingCount = newCount;
+
+    await product.save();
+
+    res.status(200).json({
+      success: true,
+      ratingAverage: product.rating,
+      ratingCount: product.ratingCount,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+

@@ -9,6 +9,11 @@ import { Routes, Route } from "react-router-dom";
 import Wishlist from "./pages/Wishlist";
 import Home from "./pages/Home";
 import Cart from "./pages/Cart";
+import Login from "./pages/Login";
+import CustomSnackbar from "./components/CustomSnackbar";
+import { useSelector } from "react-redux";
+import { hideSnackbar } from "./redux/uiSlice";
+import type { RootState } from "./redux/store";
 
 import api from "./services/api";
 import { setProducts, setLoading, setError } from "./redux/productSlice";
@@ -22,11 +27,24 @@ function App({ darkMode, setDarkMode }: AppProps) {
   const dispatch = useDispatch();
 
   const [sortBy, setSortBy] = useState("createdAt");
-const [order, setOrder] = useState("desc");
-const [page, setPage] = useState(1);
-const [limit] = useState(8);
-const [totalPages, setTotalPages] = useState(1);
-const [category, setCategory] = useState("All");
+  const [order, setOrder] = useState("desc");
+  const [page, setPage] = useState(1);
+  const [limit] = useState(8);
+  const [totalPages, setTotalPages] = useState(1);
+  const [category, setCategory] = useState("All");
+  const [search, setSearch] = useState("");
+  const [categories, setCategories] = useState<string[]>(["All"]);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await api.get("/products/categories");
+      if (response.data.success) {
+        setCategories(["All", ...response.data.data]);
+      }
+    } catch (error) {
+      console.error("Failed to fetch categories:", error);
+    }
+  };
 
   const fetchProducts = async () => {
     try {
@@ -34,7 +52,7 @@ const [category, setCategory] = useState("All");
       dispatch(setError(null));
 
       const response = await api.get(
-        `/products?page=${page}&limit=${limit}&sortBy=${sortBy}&order=${order}&category=${category}`
+        `/products?page=${page}&limit=${limit}&sortBy=${sortBy}&order=${order}&category=${category}&search=${search}`
       );
 
       dispatch(setProducts(response.data.data));
@@ -48,10 +66,18 @@ const [category, setCategory] = useState("All");
   };
 
   useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
     fetchProducts();
-  }, [dispatch, sortBy, order, page, limit, category]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, sortBy, order, page, limit, category, search]);
+
+  const snackbar = useSelector((state: RootState) => state.ui.snackbar);
 
   return (
+    <>
     <Routes>
       <Route
         path="/"
@@ -68,6 +94,10 @@ const [category, setCategory] = useState("All");
             setCategory={setCategory}
             darkMode={darkMode}
             setDarkMode={setDarkMode}
+            search={search}
+            setSearch={setSearch}
+            categories={categories}
+            fetchProducts={fetchProducts}
           />
         }
       />
@@ -91,7 +121,24 @@ const [category, setCategory] = useState("All");
           />
         }
       />
+
+      <Route
+        path="/login"
+        element={
+          <Login
+            darkMode={darkMode}
+            setDarkMode={setDarkMode}
+          />
+        }
+      />
     </Routes>
+    <CustomSnackbar 
+      open={snackbar.open}
+      message={snackbar.message}
+      severity={snackbar.severity}
+      handleClose={() => dispatch(hideSnackbar())}
+    />
+    </>
   );
 }
 

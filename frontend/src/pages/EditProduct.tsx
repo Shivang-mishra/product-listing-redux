@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import api from "../services/api";
+import type { Product } from "../types/product";
 
 import {
   Box,
@@ -12,28 +13,38 @@ import {
 import { useDispatch } from "react-redux";
 import { showSnackbar } from "../redux/uiSlice";
 
-interface AddProductProps {
-  onProductCreated: () => Promise<void>;
-  onResetPage: () => void;
+interface EditProductProps {
+  product: Product;
+  onProductUpdated: () => Promise<void>;
   onCancel: () => void;
 }
 
-function AddProduct({
-  onProductCreated,
-  onResetPage,
+function EditProduct({
+  product,
+  onProductUpdated,
   onCancel,
-}: AddProductProps) {
+}: EditProductProps) {
   const dispatch = useDispatch();
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [price, setPrice] = useState("");
-  const [category, setCategory] = useState("");
-  const [brand, setBrand] = useState("");
-  const [stock, setStock] = useState("");
-  const [rating, setRating] = useState("");
+  const [title, setTitle] = useState(product.title);
+  const [description, setDescription] = useState(product.description || "");
+  const [price, setPrice] = useState(product.price.toString());
+  const [category, setCategory] = useState(product.category);
+  const [brand, setBrand] = useState(product.brand);
+  const [stock, setStock] = useState(product.stock.toString());
+  const [rating, setRating] = useState(product.rating.toString());
   const [image, setImage] = useState<File | null>(null);
 
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setTitle(product.title);
+    setDescription(product.description || "");
+    setPrice(product.price.toString());
+    setCategory(product.category);
+    setBrand(product.brand);
+    setStock(product.stock.toString());
+    setRating(product.rating.toString());
+  }, [product]);
 
   const categories = [
     "Electronics",
@@ -45,17 +56,6 @@ function AddProduct({
     "Groceries",
   ];
 
-  const resetForm = () => {
-    setTitle("");
-    setDescription("");
-    setPrice("");
-    setCategory("");
-    setBrand("");
-    setStock("");
-    setRating("");
-    setImage(null);
-  };
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -63,7 +63,6 @@ function AddProduct({
       setLoading(true);
 
       const formData = new FormData();
-
       formData.append("title", title);
       formData.append("description", description);
       formData.append("price", price);
@@ -76,17 +75,14 @@ function AddProduct({
         formData.append("image", image);
       }
 
-      const response = await api.post("/products", formData);
+      const response = await api.put(`/products/${product._id}`, formData);
 
       if (response.data.success) {
-        resetForm();
-        onResetPage();
-
-        await onProductCreated();
-        dispatch(showSnackbar({ message: "Product added successfully", severity: "success" }));
+        await onProductUpdated();
+        dispatch(showSnackbar({ message: "Product updated successfully", severity: "success" }));
       }
     } catch (error) {
-      dispatch(showSnackbar({ message: "Unable to add product", severity: "error" }));
+      dispatch(showSnackbar({ message: "Unable to update product", severity: "error" }));
     } finally {
       setLoading(false);
     }
@@ -94,14 +90,14 @@ function AddProduct({
 
   return (
     <Box
-  sx={{
-    width: "auto",
-    maxWidth: "100%",
-    boxSizing: "border-box",
-    p: { xs: 1, sm: 1.5 },
-    overflowX: "hidden",
-  }}
->
+      sx={{
+        width: "auto",
+        maxWidth: "100%",
+        boxSizing: "border-box",
+        p: { xs: 1, sm: 1.5 },
+        overflowX: "hidden",
+      }}
+    >
       <Box
         component="form"
         onSubmit={handleSubmit}
@@ -245,7 +241,7 @@ function AddProduct({
             </Typography>
 
             <Typography variant="caption" color="text.secondary">
-              Select an image to upload
+              Select an image to replace (optional)
             </Typography>
 
             {image && (
@@ -296,7 +292,7 @@ function AddProduct({
           </Button>
 
           <Button type="submit" variant="contained" disabled={loading}>
-            {loading ? <CircularProgress size={24} color="inherit" /> : "Add Product"}
+            {loading ? <CircularProgress size={24} color="inherit" /> : "Update Product"}
           </Button>
         </Box>
       </Box>
@@ -304,4 +300,4 @@ function AddProduct({
   );
 }
 
-export default AddProduct;
+export default EditProduct;

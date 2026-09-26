@@ -9,7 +9,9 @@ export interface IProduct extends Document {
   brand: string;
   stock: number;
   rating: number;
+  ratingCount: number;
   thumbnail: string;
+  cloudinaryPublicId?: string;
 }
 
 
@@ -49,11 +51,22 @@ const productSchema = new Schema<IProduct>(
     rating: {
       type: Number,
       default: 0,
+      min: 0,
+      max: 5,
+    },
+
+    ratingCount: {
+      type: Number,
+      default: 0,
     },
 
     thumbnail: {
       type: String,
       required: true,
+    },
+
+    cloudinaryPublicId: {
+      type: String,
     },
   },
   {

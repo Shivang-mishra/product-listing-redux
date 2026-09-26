@@ -7,6 +7,7 @@ import type { Request, Response } from "express";
 import cors from "cors";
 
 import productRoutes from "./routes/productRoutes";
+import authRoutes from "./routes/authRoutes";
 
 const app = express();
 connectDB();
@@ -16,6 +17,7 @@ app.use(express.json());
 
 
 app.use("/api/products", productRoutes);
+app.use("/api/auth", authRoutes);
 
 
 app.get("/", (req: Request, res: Response) => {

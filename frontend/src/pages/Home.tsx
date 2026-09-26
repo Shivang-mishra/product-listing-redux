@@ -1,7 +1,6 @@
-import { useState, type Dispatch, type SetStateAction } from "react";
+import { useState, type Dispatch, type SetStateAction, useEffect } from "react";
 
 import { useSelector } from "react-redux";
-import CustomSnackbar from "../components/CustomSnackbar";
 import ProductCard from "../components/ProductCard";
 import Navbar from "../components/Navbar";
 import AddProduct from "./AddProduct";
@@ -23,6 +22,7 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  Skeleton,
 } from "@mui/material";
 
 import SearchIcon from "@mui/icons-material/Search";
@@ -41,6 +41,10 @@ interface HomeProps {
   setCategory: Dispatch<SetStateAction<string>>;
   darkMode: boolean;
   setDarkMode: Dispatch<SetStateAction<boolean>>;
+  search: string;
+  setSearch: Dispatch<SetStateAction<string>>;
+  categories: string[];
+  fetchProducts: () => void;
 }
 
 function Home({
@@ -55,33 +59,28 @@ function Home({
   setCategory,
   darkMode,
   setDarkMode,
+  search,
+  setSearch,
+  categories,
+  fetchProducts,
 }: HomeProps) {
   const products = useSelector(
     (state: any) => state.product.products,
   ) as Product[];
 
   const loading = useSelector((state: any) => state.product.loading);
-
-  const [openSnackbar, setOpenSnackbar] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
   const [openAddProduct, setOpenAddProduct] = useState(false);
 
-  const handleCloseSnackbar = () => {
-    setOpenSnackbar(false);
-  };
+  // Debounce search state
+  const [localSearch, setLocalSearch] = useState(search);
 
-  const categories = [
-    "All",
-    ...Array.from(new Set(products.map((product) => product.category))),
-  ];
-
-  const filteredProducts = products.filter((product) => {
-    return (
-      product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  });
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setSearch(localSearch);
+      setPage(1);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [localSearch, setSearch, setPage]);
 
   const handleSortChange = (value: string) => {
     const [newSortBy, newOrder] = value.split("-");
@@ -125,10 +124,9 @@ function Home({
           <TextField
             size="small"
             placeholder="Search Products..."
-            value={searchTerm}
+            value={localSearch}
             onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setPage(1);
+              setLocalSearch(e.target.value);
             }}
             sx={{
               width: {
@@ -206,16 +204,30 @@ function Home({
         </Box>
 
         {loading ? (
-          <Typography
-            variant="h6"
-            sx={{
-              textAlign: "center",
-              mt: 5,
-            }}
-          >
-            Loading products...
-          </Typography>
-        ) : filteredProducts.length === 0 ? (
+          <Grid container spacing={3}>
+            {Array.from(new Array(8)).map((_, index) => (
+              <Grid
+                key={index}
+                size={{
+                  xs: 12,
+                  sm: 6,
+                  md: 4,
+                  lg: 3,
+                }}
+              >
+                <Box sx={{ p: 1 }}>
+                  <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2 }} />
+                  <Skeleton variant="text" sx={{ mt: 2, fontSize: '1.5rem' }} />
+                  <Skeleton variant="text" width="60%" />
+                  <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+                    <Skeleton variant="circular" width={40} height={40} />
+                    <Skeleton variant="circular" width={40} height={40} />
+                  </Box>
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
+        ) : products.length === 0 ? (
           <Typography
             variant="h6"
             sx={{
@@ -227,7 +239,7 @@ function Home({
           </Typography>
         ) : (
           <Grid container spacing={3}>
-            {filteredProducts.map((product) => (
+            {products.map((product) => (
               <Grid
                 key={product._id}
                 size={{
@@ -237,7 +249,7 @@ function Home({
                   lg: 3,
                 }}
               >
-                <ProductCard product={product} />
+                <ProductCard product={product} fetchProducts={fetchProducts} />
               </Grid>
             ))}
           </Grid>
@@ -284,6 +296,7 @@ function Home({
           <AddProduct
             onProductCreated={async () => {
               setOpenAddProduct(false);
+              fetchProducts(); // Refresh products
             }}
             onResetPage={() => {
               setPage(1);
@@ -291,19 +304,9 @@ function Home({
             onCancel={() => {
               setOpenAddProduct(false);
             }}
-            onSuccess={(message) => {
-              setSnackbarMessage(message);
-              setOpenSnackbar(true);
-            }}
           />
         </DialogContent>
       </Dialog>
-
-      <CustomSnackbar
-        open={openSnackbar}
-        message={snackbarMessage}
-        handleClose={handleCloseSnackbar}
-      />
     </>
   );
 }
